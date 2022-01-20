@@ -1,99 +1,133 @@
 <?php
 
-
 namespace VirVolta\ArmorEffect;
 
-use pocketmine\entity\Effect;
-use pocketmine\entity\EffectInstance;
-use pocketmine\event\entity\EntityArmorChangeEvent;
-use pocketmine\Player;
+use pocketmine\data\bedrock\EffectIdMap;
+use pocketmine\entity\effect\EffectInstance;
+use pocketmine\event\inventory\InventoryTransactionEvent;
+use pocketmine\event\player\PlayerInteractEvent;
+use pocketmine\event\player\PlayerItemUseEvent;
+use pocketmine\event\player\PlayerJoinEvent;
+use pocketmine\inventory\ArmorInventory;
+use pocketmine\inventory\transaction\action\SlotChangeAction;
+use pocketmine\item\Armor;
+use pocketmine\item\Item;
+use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
 use pocketmine\event\Listener;
 use pocketmine\utils\Config;
 
 class ArmorEffect extends PluginBase implements Listener
 {
-    private $config;
+    private static Config $config;
 
-    /**
-     * @param mixed $config
-     */
-    public function setData(Config$config): void
-    {
-        $this->config = $config;
-    }
-    
-    public function getData(): Config
-    {
-        return $this->config;
+    public static function getData() : Config{
+        return self::$config;
     }
 
-    public function onEnable()
+    public function onEnable() : void
     {
-        $this->getServer()->getPluginManager()->registerEvents($this, $this);
-
         @mkdir($this->getDataFolder());
+        $this->getLogger()->notice("Loading the Armor Effect plugin");
 
         if (!file_exists($this->getDataFolder() . "config.yml")) {
-
             $this->saveResource('config.yml');
         }
 
-        $this->setData(new Config($this->getDataFolder() . 'config.yml', Config::YAML));
+        self::$config = new Config($this->getDataFolder() . 'config.yml', Config::YAML);
+        $this->getServer()->getPluginManager()->registerEvents($this, $this);
     }
 
-    public function onArmor(EntityArmorChangeEvent $event)
-    {
-        $player = $event->getEntity();
+    public function onJoin(PlayerJoinEvent $event) : void {
+        $player = $event->getPlayer();
+        foreach ($player->getArmorInventory()->getContents() as $targetItem) {
+            if ($targetItem instanceof Armor) { //if the item is not armor is not my problem
+                $slot = $targetItem->getArmorSlot();
+                $sourceItem = $player->getArmorInventory()->getItem($slot);
 
-        if ($player instanceof Player) {
+                $this->addEffects($player, $sourceItem, $targetItem);
+            }
+        }
+    }
 
-            $new = $event->getNewItem();
-            $old = $event->getOldItem();
+    public function onInteract(PlayerInteractEvent $event) : void {
+        $player = $event->getPlayer();
+        $targetItem = $event->getItem();
 
-            $configs = $this->getData()->getAll();
-            $ids = array_keys($configs);
+        if ($targetItem instanceof Armor) {
+            $slot = $targetItem->getArmorSlot();
+            $sourceItem = $player->getArmorInventory()->getItem($slot);
 
-            if (in_array($new->getId(), $ids)) {
+            if (!$event->isCancelled()) {
+                $this->addEffects($player, $sourceItem, $targetItem);
+            }
+        }
+    }
 
-                $array = $this->getData()->getAll()[$new->getId()];
+    public function onUse(PlayerItemUseEvent $event) : void {
+        $player = $event->getPlayer();
+        $targetItem = $event->getItem();
 
-                if ($array["message"] != null) {
+        if ($targetItem instanceof Armor) {
+            $slot = $targetItem->getArmorSlot();
+            $sourceItem = $player->getArmorInventory()->getItem($slot);
 
-                    $player->sendMessage($array["message"]);
+            if (!$event->isCancelled()) {
+                $this->addEffects($player, $sourceItem, $targetItem);
+            }
+        }
+    }
 
+    public function onArmor(InventoryTransactionEvent $event) : void {
+        $transaction = $event->getTransaction();
+        $player = $transaction->getSource();
+
+        foreach ($transaction->getActions() as $action) {
+            if ($action instanceof SlotChangeAction) {
+                if ($action->getInventory() instanceof ArmorInventory) {
+                    $sourceItem = $action->getSourceItem();
+                    $targetItem = $action->getTargetItem();
+
+                    if ($player instanceof Player) {
+                        if (!$event->isCancelled()) {
+                            $this->addEffects($player, $sourceItem, $targetItem);
+                            return;
+                        }
+                    }
                 }
+            }
+        }
+    }
 
-                $effects = $array["effect"];
+    private function addEffects(Player $player, Item $sourceItem, Item $targetItem) : void {
+        $configs = $this->getData()->getAll();
+        $ids = array_keys($configs);
 
-                foreach ($effects as $effectid => $arrayeffect) {
+        if (in_array($targetItem->getId(), $ids)) {
+            $array = $this->getData()->getAll()[$targetItem->getId()];
+            if ($array["message"] != null) {
+                $player->sendMessage($array["message"]);
+            }
+            $effects = $array["effect"];
 
-                    $eff = new EffectInstance(
-                        Effect::getEffect($effectid),
-                        9999999 * 20,
-                        (int)$arrayeffect["amplifier"],
-                        (bool)$arrayeffect["visible"]
-                    );
-
-                    $player->addEffect($eff);
-
-                }
-
-            } else if (in_array($old->getId(), $ids)) {
-
-                $array = $this->getData()->getAll()[$old->getId()];
-                $effects = $array["effect"];
-
-                foreach ($effects as $effectid => $arrayeffect) {
-
-                    $player->removeEffect($effectid);
-
-                }
-
+            foreach ($effects as $effectid => $arrayeffect) {
+                $eff = new EffectInstance(
+                    EffectIdMap::getInstance()->fromId($effectid),
+                    9999999 * 20,
+                    (int)$arrayeffect["amplifier"],
+                    (bool)$arrayeffect["visible"]
+                );
+                $player->getEffects()->add($eff);
             }
 
-        }
+        } else if (in_array($sourceItem->getId(), $ids)) {
+            $array = $this->getData()->getAll()[$sourceItem->getId()];
+            $effects = $array["effect"];
 
+            foreach ($effects as $effectid => $arrayeffect) {
+                $player->getEffects()->remove(EffectIdMap::getInstance()->fromId($effectid));
+            }
+        }
     }
 
 }

@@ -1,5 +1,5 @@
-p align="center">
-<img src="http://image.noelshack.com/fichiers/2021/39/5/1633118741-logo-no-background.png" alt="Voltage logo" height="180" />
+<p align="center">
+  <img src="http://image.noelshack.com/fichiers/2021/39/5/1633118741-logo-no-background.png" alt="Voltage logo" height="180" />
 </p>
 
 <h1 align="center">Voltage-Groups</h1>
