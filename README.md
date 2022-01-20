@@ -15,7 +15,7 @@
 Versions they are available [here](https://github.com/Voltagegroups/BossBarApi/releases)
 <br/>
 Branch stable for [PM4](https://github.com/Voltagegroups/ArmorEffect/tree/pm4) [PM3](https://github.com/Voltagegroups/ArmorEffect/tree/pm)
-3
+
 ### Getting the config.yml of the plugin
 
 ```YAML
