@@ -1,0 +1,7 @@
+name: ArmorEffect
+main: VirVolta\ArmorEffect\ArmorEffect
+api: [3.0.0]
+author: VirVolta
+website: https://discord.gg/Vyznuka
+version: 0.3
+description: ArmorEffect
