@@ -5,7 +5,6 @@ namespace VirVolta\ArmorEffect;
 use pocketmine\data\bedrock\EffectIdMap;
 use pocketmine\entity\effect\EffectInstance;
 use pocketmine\event\inventory\InventoryTransactionEvent;
-use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\event\player\PlayerItemUseEvent;
 use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\inventory\ArmorInventory;
@@ -50,20 +49,6 @@ class ArmorEffect extends PluginBase implements Listener
         }
     }
 
-    public function onInteract(PlayerInteractEvent $event) : void {
-        $player = $event->getPlayer();
-        $targetItem = $event->getItem();
-
-        if ($targetItem instanceof Armor) {
-            $slot = $targetItem->getArmorSlot();
-            $sourceItem = $player->getArmorInventory()->getItem($slot);
-
-            if (!$event->isCancelled()) {
-                $this->addEffects($player, $sourceItem, $targetItem);
-            }
-        }
-    }
-
     public function onUse(PlayerItemUseEvent $event) : void {
         $player = $event->getPlayer();
         $targetItem = $event->getItem();
@@ -103,6 +88,15 @@ class ArmorEffect extends PluginBase implements Listener
         $configs = $this->getData()->getAll();
         $ids = array_keys($configs);
 
+        if (in_array($sourceItem->getId(), $ids)) {
+            $array = $this->getData()->getAll()[$sourceItem->getId()];
+            $effects = $array["effect"];
+
+            foreach ($effects as $effectid => $arrayeffect) {
+                $player->getEffects()->remove(EffectIdMap::getInstance()->fromId($effectid));
+            }
+        }
+
         if (in_array($targetItem->getId(), $ids)) {
             $array = $this->getData()->getAll()[$targetItem->getId()];
             if ($array["message"] != null) {
@@ -120,13 +114,6 @@ class ArmorEffect extends PluginBase implements Listener
                 $player->getEffects()->add($eff);
             }
 
-        } else if (in_array($sourceItem->getId(), $ids)) {
-            $array = $this->getData()->getAll()[$sourceItem->getId()];
-            $effects = $array["effect"];
-
-            foreach ($effects as $effectid => $arrayeffect) {
-                $player->getEffects()->remove(EffectIdMap::getInstance()->fromId($effectid));
-            }
         }
     }
 
