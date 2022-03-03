@@ -4,13 +4,15 @@ namespace VirVolta\ArmorEffect;
 
 use pocketmine\data\bedrock\EffectIdMap;
 use pocketmine\entity\effect\EffectInstance;
-use pocketmine\event\inventory\InventoryTransactionEvent;
-use pocketmine\event\player\PlayerItemUseEvent;
+use pocketmine\entity\Living;
 use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\inventory\ArmorInventory;
-use pocketmine\inventory\transaction\action\SlotChangeAction;
+use pocketmine\inventory\CallbackInventoryListener;
+use pocketmine\inventory\Inventory;
 use pocketmine\item\Armor;
 use pocketmine\item\Item;
+use pocketmine\item\ItemFactory;
+use pocketmine\item\ItemIds;
 use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
 use pocketmine\event\Listener;
@@ -18,6 +20,7 @@ use pocketmine\utils\Config;
 
 class ArmorEffect extends PluginBase implements Listener
 {
+    private const EFFECT_MAX_DURATION = 2147483647;
     private static Config $config;
 
     public static function getData() : Config{
@@ -40,51 +43,41 @@ class ArmorEffect extends PluginBase implements Listener
     public function onJoin(PlayerJoinEvent $event) : void {
         $player = $event->getPlayer();
         foreach ($player->getArmorInventory()->getContents() as $targetItem) {
-            if ($targetItem instanceof Armor) { //if the item is not armor is not my problem
+            if ($targetItem instanceof Armor) {
                 $slot = $targetItem->getArmorSlot();
                 $sourceItem = $player->getArmorInventory()->getItem($slot);
 
                 $this->addEffects($player, $sourceItem, $targetItem);
-            }
-        }
-    }
-
-    public function onUse(PlayerItemUseEvent $event) : void {
-        $player = $event->getPlayer();
-        $targetItem = $event->getItem();
-
-        if ($targetItem instanceof Armor) {
-            $slot = $targetItem->getArmorSlot();
-            $sourceItem = $player->getArmorInventory()->getItem($slot);
-
-            if (!$event->isCancelled()) {
-                $this->addEffects($player, $sourceItem, $targetItem);
-            }
-        }
-    }
-
-    public function onArmor(InventoryTransactionEvent $event) : void {
-        $transaction = $event->getTransaction();
-        $player = $transaction->getSource();
-
-        foreach ($transaction->getActions() as $action) {
-            if ($action instanceof SlotChangeAction) {
-                if ($action->getInventory() instanceof ArmorInventory) {
-                    $sourceItem = $action->getSourceItem();
-                    $targetItem = $action->getTargetItem();
-
-                    if ($player instanceof Player) {
-                        if (!$event->isCancelled()) {
-                            $this->addEffects($player, $sourceItem, $targetItem);
-                            return;
-                        }
-                    }
+            } else {
+                if ($targetItem->getId() == ItemIds::AIR) {
+                    $this->addEffects($player, ItemFactory::air(), $targetItem);
                 }
             }
         }
+        $player->getArmorInventory()->getListeners()->add(CallbackInventoryListener::onAnyChange(
+            function(Inventory $inventory, int $slot, Item $oldItem) : void{
+                if ($inventory instanceof ArmorInventory) {
+                    $targetItem = $inventory->getItem($slot);
+                    $this->addEffects($inventory->getHolder(), $oldItem, $targetItem);
+                }
+            }
+        )
+
+            /*new CallbackInventoryListener(
+            function (Inventory $inventory, int $slot, Item $oldItem) : void {
+                if ($inventory instanceof ArmorInventory) {
+                    $targetItem = $inventory->getItem($slot);
+                    $this->addEffects($inventory->getHolder(), $oldItem, $targetItem);
+                }
+            },
+            function(Inventory $inventory, array $oldItems) : void {
+                //NOTHING
+            }
+        )*/);
     }
 
-    private function addEffects(Player $player, Item $sourceItem, Item $targetItem) : void {
+    //look for all entity
+    private function addEffects(Living $player, Item $sourceItem, Item $targetItem) : void {
         $configs = $this->getData()->getAll();
         $ids = array_keys($configs);
 
@@ -100,21 +93,21 @@ class ArmorEffect extends PluginBase implements Listener
         if (in_array($targetItem->getId(), $ids)) {
             $array = $this->getData()->getAll()[$targetItem->getId()];
             if ($array["message"] != null) {
-                $player->sendMessage($array["message"]);
+                if ($player instanceof Player) {
+                    $player->sendMessage($array["message"]);
+                }
             }
             $effects = $array["effect"];
 
             foreach ($effects as $effectid => $arrayeffect) {
                 $eff = new EffectInstance(
                     EffectIdMap::getInstance()->fromId($effectid),
-                    9999999 * 20,
+                    self::EFFECT_MAX_DURATION,
                     (int)$arrayeffect["amplifier"],
                     (bool)$arrayeffect["visible"]
                 );
                 $player->getEffects()->add($eff);
             }
-
         }
     }
-
 }
