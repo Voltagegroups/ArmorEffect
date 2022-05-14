@@ -72,7 +72,7 @@ class ArmorEffect extends PluginBase implements Listener
             function(Inventory $inventory, array $oldItems) : void {
                 //NOTHING
             }
-        )*/);
+        )*/
     }
 
     //look for all entity
