@@ -54,14 +54,13 @@ class ArmorEffect extends PluginBase implements Listener
                 }
             }
         }
-        $player->getArmorInventory()->getListeners()->add(CallbackInventoryListener::onAnyChange(
-            function(Inventory $inventory, int $slot, Item $oldItem) : void{
-                if ($inventory instanceof ArmorInventory) {
-                    $targetItem = $inventory->getItem($slot);
-                    $this->addEffects($inventory->getHolder(), $oldItem, $targetItem);
-                }
+        
+       $player->getArmorInventory()->getListeners()->add(new CallbackInventoryListener(function(Inventory $inventory, int $slot, Item $oldItem) : void{
+            if ($inventory instanceof ArmorInventory) {
+                $targetItem = $inventory->getItem($slot);
+                $this->addEffects($inventory->getHolder(), $oldItem, $targetItem);
             }
-        )
+        },  null));
 
             /*new CallbackInventoryListener(
             function (Inventory $inventory, int $slot, Item $oldItem) : void {
@@ -73,7 +72,7 @@ class ArmorEffect extends PluginBase implements Listener
             function(Inventory $inventory, array $oldItems) : void {
                 //NOTHING
             }
-        )*/);
+        )*/
     }
 
     //look for all entity
