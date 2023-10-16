@@ -1,7 +1,10 @@
 name: ArmorEffect
 main: VirVolta\ArmorEffect\ArmorEffect
-api: [4.0.0]
-author: VirVolta
+api: [ 5.0.0 ]
+authors:
+  - VirVolta
+  - Yakuuuuuuuuuuuuuuu
+  - Refaltor
 website: https://discord.gg/Vyznuka
-version: 0.3
+version: 0.4.0
 description: ArmorEffect
