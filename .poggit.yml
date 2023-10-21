@@ -1,7 +1,7 @@
 --- # Poggit-CI Manifest. Open the CI at https://poggit.pmmp.io/ci/Voltagegroups/ArmorEffect
 build-by-default: true
 branches:
-- pm4
+- pm5
 projects:
   ArmorEffect:
     path: ""
