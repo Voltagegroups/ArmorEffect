@@ -1,4 +1,4 @@
-## Plugin Core for Voltage group's
+## Plugin Armor Effect
 
 <p align="center">
   <img src="./icon.png" alt="Voltage logo" height="180" /> <br>
@@ -10,7 +10,7 @@
 > Note: The `pm3` and `pm4` branch was abandoned.
 <br/>
 
-Versions they are available [here](https://github.com/Voltagegroups/ArmorEffect/releases/tag/stable)
+Versions they are available [here](https://github.com/Voltagegroups/ArmorEffect/releases/tag/stablePM5)
 <br/>
 Branch stable
 for [PM5](https://github.com/Voltagegroups/ArmorEffect/tree/pm5) [PM4](https://github.com/Voltagegroups/ArmorEffect/tree/pm4) [PM3](https://github.com/Voltagegroups/ArmorEffect/tree/pm)
@@ -18,25 +18,21 @@ for [PM5](https://github.com/Voltagegroups/ArmorEffect/tree/pm5) [PM4](https://g
 ### Getting the config.yml of the plugin
 
 ```YAML
-Iron Helmet: #name of item Armor
-  message: "message" # or null
-  effect:
-    1:
-      durability: 2 #time in seconde
-      visible: true # or false particules
-    3:
-      durability: 2 #time in seconde
-      visible: true # or false particules
+ron_helmet:
+  message: "§bWell done ,you have a Helmet Effect" #message to not have a message metered a space
+  effects:
+    night_vision: #name effect
+      amplifier: 0 #0 = level(1) so 3 = level(4)
+      visible: false #particle
+    water_breathing: #name effect
+      amplifier: 0 #0 = level(1) so 3 = level(4)
+      visible: false #particle
 ```
-
-## Contents
-
-- [Features](./FEATURES.md)
-- [License](./LICENSE)
 
 ## Usages
 
 * [PocketMine-MP](https://github.com/pmmp/PocketMine-MP)
+- [License](./LICENSE)
 
 ## Community
 
