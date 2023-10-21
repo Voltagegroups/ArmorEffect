@@ -1,29 +1,29 @@
 ﻿---
-"Iron Helmet":
+iron_helmet:
   message: "§bWell done ,you have a Helmet Effect" #message to not have a message metered a space
-  effect:
-    16: #id effect
+  effects:
+    night_vision: #name effect
       amplifier: 0 #0 = level(1) so 3 = level(4)
       visible: false #particle
-    13: #id effect
+    water_breathing: #name effect
       amplifier: 0 #0 = level(1) so 3 = level(4)
       visible: false #particle
-"Iron Chestplate":
+iron_chestplate:
   message: "§bWell done ,you have a Chestplate Effect" #message to not have a message metered a space
-  effect:
-    11: #id effect
+  effects:
+    resistance: #name effect
       amplifier: 1 #0 = level(1) so 3 = level(4)
       visible: false #particle
-"Iron Leggings":
+iron_leggings:
   message: "§bWell done ,you have a Leggings Effect" #message to not have a message metered a space
-  effect:
-    12: #id effect
+  effects:
+    fire_resistance: #name effect
       amplifier: 0 #0 = level(1) so 3 = level(4)
       visible: false #particle
-"Iron Boots":
+iron_boots:
   message: "§bWell done ,you have a Speed" #message to not have a message metered a space
-  effect:
-    1: #id effect
+  effects:
+    speed: #name effect
       amplifier: 1 #0 = level(1) so 3 = level(4)
       visible: false #particle
 ...

@@ -2,8 +2,8 @@
 
 namespace VirVolta\ArmorEffect;
 
-use pocketmine\data\bedrock\EffectIdMap;
 use pocketmine\entity\effect\EffectInstance;
+use pocketmine\entity\effect\StringToEffectParser;
 use pocketmine\event\inventory\InventoryTransactionEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerItemUseEvent;
@@ -12,6 +12,8 @@ use pocketmine\inventory\ArmorInventory;
 use pocketmine\inventory\transaction\action\SlotChangeAction;
 use pocketmine\item\Armor;
 use pocketmine\item\Item;
+use pocketmine\item\StringToItemParser;
+use pocketmine\item\VanillaItems;
 use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\Config;
@@ -69,34 +71,45 @@ class ArmorEffect extends PluginBase implements Listener
     private function addEffects(Player $player, Item $sourceItem, Item $targetItem): void
     {
         $configs = $this->getData()->getAll();
-        $ids = array_keys($configs);
+        $names = array_keys($configs);
 
-        if (in_array($sourceItem->getVanillaName(), $ids)) {
-            $array = $this->getData()->getAll()[$sourceItem->getVanillaName()];
-            $effects = $array["effect"];
+        $nameOfSourceItem = StringToItemParser::getInstance()->lookupAliases($sourceItem);
+        if (isset($nameOfSourceItem[0])) {
+            $nameOfSourceItem = $nameOfSourceItem[0];
+            if (in_array($nameOfSourceItem, $names)) {
+                $array = $this->getData()->getAll()[$nameOfSourceItem];
+                $effects = $array["effects"];
 
-            foreach ($effects as $effectid => $arrayeffect) {
-                $player->getEffects()->remove(EffectIdMap::getInstance()->fromId($effectid));
+                foreach ($effects as $effectname => $arrayeffect) {
+                    $effect = StringToEffectParser::getInstance()->parse($effectname);
+                    $player->getEffects()->remove($effect);
+                }
             }
         }
 
-        if (in_array($targetItem->getVanillaName(), $ids)) {
-            $array = $this->getData()->getAll()[$targetItem->getVanillaName()];
-            if ($array["message"] != null) {
-                $player->sendMessage($array["message"]);
-            }
-            $effects = $array["effect"];
+        $nameOfTargetItem = StringToItemParser::getInstance()->lookupAliases($targetItem);
+        if (isset($nameOfTargetItem[0])) {
+            $nameOfTargetItem = $nameOfTargetItem[0];
+            if (in_array($nameOfTargetItem, $names)) {
+                $array = $this->getData()->getAll()[$nameOfTargetItem];
+                if ($array["message"] != null) {
+                    $player->sendMessage($array["message"]);
+                }
+                $effects = $array["effects"];
 
-            foreach ($effects as $effectid => $arrayeffect) {
-                $eff = new EffectInstance(
-                    EffectIdMap::getInstance()->fromId($effectid),
-                    self::EFFECT_MAX_DURATION,
-                    (int)$arrayeffect["amplifier"],
-                    (bool)$arrayeffect["visible"]
-                );
-                $player->getEffects()->add($eff);
+                foreach ($effects as $effectname => $arrayeffect) {
+                    $effect = StringToEffectParser::getInstance()->parse($effectname);
+                    if (!is_null($effect)) {
+                        $eff = new EffectInstance(
+                            $effect,
+                            self::EFFECT_MAX_DURATION,
+                            (int)$arrayeffect["amplifier"],
+                            (bool)$arrayeffect["visible"]
+                        );
+                        $player->getEffects()->add($eff);
+                    }
+                }
             }
-
         }
     }
 
@@ -115,6 +128,8 @@ class ArmorEffect extends PluginBase implements Listener
                 $sourceItem = $player->getArmorInventory()->getItem($slot);
 
                 $this->addEffects($player, $sourceItem, $targetItem);
+            } else {
+                $this->addEffects($player, VanillaItems::AIR(), $targetItem);
             }
         }
     }
@@ -125,7 +140,7 @@ class ArmorEffect extends PluginBase implements Listener
      * @priority MONITOR
      * @return void
      */
-    private function onUse(PlayerItemUseEvent $event): void
+    public function onUse(PlayerItemUseEvent $event): void
     {
         $player = $event->getPlayer();
         $targetItem = $event->getItem();
@@ -146,7 +161,7 @@ class ArmorEffect extends PluginBase implements Listener
      * @priority MONITOR
      * @return void
      */
-    private function onArmor(InventoryTransactionEvent $event): void
+    public function onArmor(InventoryTransactionEvent $event): void
     {
         $transaction = $event->getTransaction();
         $player = $transaction->getSource();
